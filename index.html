@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Prime Factorization — Created by Mr. McLean Math</title>
+<style>
+  :root{
+    --bg:#0f172a; --card:#101828; --text:#e5e7eb; --muted:#9ca3af;
+    --ok:#22c55e; --bad:#ef4444; --focus:#38bdf8;
+    --green:#22c55e; --yellow:#f59e0b; --red:#ef4444;
+    --line:#1f2937; --btn:#0b1226;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
+       background:linear-gradient(180deg,#0b1226,#0f172a 60%); color:var(--text)}
+  header{padding:16px; border-bottom:1px solid var(--line); background:#0b1226; position:sticky; top:0; z-index:10}
+  h1{margin:0; font-size:20px}
+  .toolbar{display:grid; gap:8px; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); margin-top:12px}
+  select, button, input[type="number"]{
+    width:100%; padding:10px 12px; border-radius:12px; border:1px solid #374151; background:var(--btn); color:var(--text)
+  }
+  select:focus, button:focus, input:focus{outline:2px solid var(--focus); outline-offset:2px}
+  main{max-width:1150px; margin:20px auto; padding:16px}
+  .layout{display:grid; gap:16px; grid-template-columns: 1fr}
+  @media(min-width:1040px){ .layout{grid-template-columns: 2fr 1fr} }
+  .card{position:relative; background:linear-gradient(180deg,#0c1224,#101828); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between}
+  .pill{display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px; background:#0b1328; border:1px solid var(--line); color:var(--muted); font-size:14px}
+  .tier-badge{display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:6px 12px; border:1px solid #27354a; background:#0b1328; color:var(--muted); font-size:14px}
+  .tier-dot{width:10px; height:10px; border-radius:50%}
+  .dot-green{background:var(--green)} .dot-yellow{background:var(--yellow)} .dot-red{background:var(--red)}
+  .prompt{font-size:clamp(22px,4vw,36px); font-weight:700; text-align:center; margin:12px 0 4px}
+  .sub-instruction{color:var(--muted); text-align:center; margin-bottom:8px}
+  .inputs{display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:center; margin-top:12px}
+  .inputs input{width:90px; text-align:center; font-size:20px; border-radius:12px; padding:10px 6px; background:var(--btn); border:1px solid #374151; color:var(--text)}
+  .inputs .times{font-size:22px; opacity:.8; user-select:none}
+  .actions{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:12px}
+  .feedback{margin-top:10px; border-radius:12px; padding:12px; border:1px solid #27354a; background:#0b1328; display:none}
+  .feedback.ok{display:block; border-color:rgba(34,197,94,.4)}
+  .feedback.bad{display:block; border-color:rgba(239,68,68,.4)}
+  .steps{margin-top:12px; border-top:1px dashed #243041; padding-top:12px; display:none}
+  .steps pre{white-space:pre-wrap; font-family:ui-monospace,Menlo,Consolas,monospace; background:#0b1326; border:1px solid #223049; border-radius:12px; padding:10px; margin:0}
+  footer{margin:36px auto 24px; text-align:center; color:var(--muted)}
+  .kbd{font-family:ui-monospace,monospace; background:#141c2f; border:1px solid #2a3c5c; padding:1px 6px; border-radius:6px}
+  .expbar{display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap; margin-top:8px}
+  .expbar .tiny{width:auto; min-width:42px; padding:6px 10px; border-radius:10px; font-size:16px}
+  .mini{font-size:13px; color:var(--muted)}
+  .pad-wrap{display:flex; flex-direction:column; gap:10px}
+  .pad-tools{display:flex; gap:8px; flex-wrap:wrap}
+  .pad-tools input[type="color"]{padding:0; height:40px; width:48px; border-radius:10px; border:1px solid #374151; background:var(--btn)}
+  canvas{width:100%; height:420px; background:#0b1328; border:1px solid var(--line); border-radius:12px; touch-action:none}
+  .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:50}
+  .modal .box{max-width:720px; background:#0c1224; color:#e5e7eb; border:1px solid #2a3852; border-radius:16px; padding:18px}
+  .modal h2{margin:0 0 8px 0}
+  .modal ul{margin:10px 0 0 20px}
+  .center{display:flex; justify-content:center; gap:10px; flex-wrap:wrap}
+  .hidden{display:none}
+  .expBadge{font-size:18px}
+  /* ✔ ✖ popup near prompt */
+  .result-pop{position:absolute; left:50%; transform:translateX(-50%); top:18px; font-size:40px; opacity:0; pointer-events:none; transition:opacity .15s ease}
+  .result-pop.show{opacity:1}
+  /* missed list styles */
+  details summary{cursor:pointer}
+  .miss-card{border:1px solid #27354a; background:#0b1328; border-radius:12px; padding:12px; margin:8px 0}
+  .miss-q{font-weight:700}
+  .muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Prime Factorization — Typed Factors</h1>
+  <div class="toolbar" role="region" aria-label="Game controls">
+    <label>
+      <span class="pill">Difficulty</span>
+      <select id="tier" aria-label="Difficulty">
+        <option value="green">🟢 Easy</option>
+        <option value="yellow">🟡 Medium</option>
+        <option value="red">🔴 Hard</option>
+        <option value="mixed">🎲 Mixed</option>
+      </select>
+    </label>
+    <label>
+      <span class="pill">Session Timer</span>
+      <select id="sessionTimerSel" aria-label="Session Timer On or Off">
+        <option value="on" selected>On</option>
+        <option value="off">Off</option>
+      </select>
+    </label>
+    <label>
+      <span class="pill">Length</span>
+      <select id="sessionLenSel" aria-label="Session Length (seconds)">
+        <option value="30">30s</option>
+        <option value="60" selected>60s</option>
+        <option value="90">90s</option>
+        <option value="120">120s</option>
+      </select>
+    </label>
+    <label>
+      <span class="pill">Sound</span>
+      <select id="soundSel" aria-label="Sound On or Off">
+        <option value="off" selected>Off</option>
+        <option value="on">On</option>
+      </select>
+    </label>
+    <label>
+      <span class="pill">Contrast</span>
+      <select id="contrastSel" aria-label="High contrast">
+        <option value="normal" selected>Normal</option>
+        <option value="high">High</option>
+      </select>
+    </label>
+    <button id="startBtn" aria-label="Start session">Start ▶</button>
+    <button id="endBtn" aria-label="End session" disabled>End ■</button>
+    <button id="howBtn" aria-label="How to Play">How to Play</button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="card" aria-live="polite" aria-atomic="true">
+    <div id="resultPop" class="result-pop" aria-hidden="true">✔</div>
+
+    <div class="row">
+      <div class="tier-badge"><span class="tier-dot dot-green" id="tierDot" aria-hidden="true"></span><span id="tierLabel">🟢 Easy</span></div>
+      <div class="row" style="gap:8px">
+        <div class="pill"><strong id="score">0</strong>&nbsp;points</div>
+        <div class="pill"><strong id="correct">0</strong>&nbsp;correct</div>
+        <div class="pill"><strong id="answered">0</strong>&nbsp;answered</div>
+        <div class="pill" id="timerWrap"><span id="timer">60</span>s</div>
+      </div>
+    </div>
+
+    <div class="prompt" id="prompt">Press “Start” to begin</div>
+    <div class="sub-instruction" id="subMsg">
+      Enter prime factors (use exponents if you like). Press <span class="kbd">Enter</span> to submit. Use <span class="kbd">Tab</span> (adds/focuses next) or <strong>+ Prime Factor</strong>.
+    </div>
+
+    <div id="challengeUI" role="group" aria-label="Prime factor inputs" class="hidden">
+      <div class="inputs" id="factorInputs"></div>
+
+      <div class="expbar" aria-label="Exponent tools">
+        <span class="mini">Apply exponent to the selected field:</span>
+        <button class="tiny" data-exp="2">²</button>
+        <button class="tiny" data-exp="3">³</button>
+        <button class="tiny" data-exp="4">⁴</button>
+        <button class="tiny" data-exp="5">⁵</button>
+        <button class="tiny" id="expClear">✕</button>
+      </div>
+
+      <div class="actions">
+        <button id="addFactorBtn">+ Prime Factor</button>
+        <button id="submitBtn">Submit</button>
+        <button id="clearBtn">Clear</button>
+      </div>
+    </div>
+
+    <div id="feedback" class="feedback" role="alert" aria-live="assertive"></div>
+
+    <div id="steps" class="steps" aria-live="polite">
+      <div class="pill">Show Steps</div>
+      <pre id="stepsText"></pre>
+    </div>
+
+    <div id="summary" class="hidden">
+      <h2>Session Summary</h2>
+      <p id="sumText"></p>
+      <div id="missList"></div>
+      <div class="center" style="margin-top:8px">
+        <button id="restartBtn">Restart</button>
+      </div>
+    </div>
+  </section>
+
+  <aside class="card pad-wrap" aria-label="Scratchpad">
+    <div class="row" style="justify-content:flex-start">
+      <div class="pill">✍️ Draw Pad</div>
+    </div>
+    <div class="pad-tools">
+      <button id="penBtn">Pen</button>
+      <button id="eraserBtn">Eraser</button>
+      <label class="pill">Size <input id="sizeSel" type="range" min="1" max="18" value="4" style="width:140px; vertical-align:middle"></label>
+      <input id="colorSel" type="color" value="#e5e7eb" aria-label="Pen color" />
+      <button id="padClear">Clear</button>
+      <button id="padDownload">Download</button>
+    </div>
+    <canvas id="pad" width="800" height="420" aria-label="Drawing area"></canvas>
+    <div class="mini">Use mouse, stylus, or finger. Pen/Eraser supported.</div>
+  </aside>
+</main>
+
+<footer>Created by Mr. McLean Math</footer>
+
+<!-- How to Play Modal -->
+<div id="howModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+  <div class="box">
+    <h2 id="howTitle">How to Play</h2>
+    <p><strong>Goal:</strong> Provide the prime factorization of each number.</p>
+    <ul>
+      <li><strong>Timer ON:</strong> Choose a session length (30–120s). Answer as many as you can. Summary shows totals and <em>incorrect answers</em> with steps.</li>
+      <li><strong>Timer OFF:</strong> Practice freely. After submit, review ✔/✖ and (for wrong answers) steps; press <em>Enter</em> to advance.</li>
+      <li><strong>Submit:</strong> Press <span class="kbd">Enter</span> or click <strong>Submit</strong>.</li>
+      <li><strong>Tab:</strong> Moves to next factor; on the last field, Tab creates a new field and focuses it. <span class="kbd">Shift+Tab</span> moves back.</li>
+      <li><strong>Exponents:</strong> Select a field, then ² ³ ⁴ ⁵ (or ✕ to clear).</li>
+    </ul>
+    <div class="center" style="margin-top:12px">
+      <button id="closeHow">Got it</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =============== Utilities =============== */
+const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;}
+const product=a=>a.reduce((x,y)=>x*y,1);
+const isPrime=n=>{
+  if(n<2)return false;
+  if(n%2===0)return n===2;
+  const r=Math.floor(Math.sqrt(n));
+  for(let i=3;i<=r;i+=2) if(n%i===0) return false;
+  return true;
+};
+const SUP={2:"\u00B2",3:"\u00B3",4:"\u2074",5:"\u2075"};
+const toExpanded=f=>f.slice().sort((a,b)=>a-b).join(" x ");
+const toExpo=f=>{
+  const s=f.slice().sort((a,b)=>a-b);
+  const c={}; s.forEach(p=>c[p]=(c[p]||0)+1);
+  return Object.entries(c).map(([p,k])=>k>1?p+SUP[k]:p).join(" x ");
+};
+const factorize=(n)=>{
+  let m=n,f=[],p=2;
+  while(p*p<=m){while(m%p===0){f.push(p); m/=p} p=p===2?3:p+2}
+  if(m>1) f.push(m);
+  return f;
+};
+const stepsFor=(n)=>{
+  let m=n, out=[];
+  const primes=[2,3,5,7,11,13,17,19,23,29,31];
+  for(const p of primes){
+    while(m%p===0){out.push(`${m} ÷ ${p} = ${m/p}`); m/=p}
+    if(m===1) break;
+  }
+  if(m>1){out.push(`${m} is prime`)}
+  return out;
+};
+
+/* =============== Composite-only Generator =============== */
+function makeCompositeFromPattern(factors, min, max){
+  const count={}; factors.forEach(x=>count[x]=(count[x]||0)+1);
+  for(const [p,c] of Object.entries(count)){
+    if(c>5){let remove=c-5; factors=factors.filter(v=> (v==p && remove>0) ? (remove--,false):true);}
+  }
+  const n=product(factors);
+  if(n>=min && n<=max && !isPrime(n)) return n;
+  return null;
+}
+function greenComposite(){
+  for(let t=0;t<200;t++){
+    const base=[2,3,5,7]; if(Math.random()<0.15) base.push(11);
+    const k=rand(2,4);
+    let f=[]; for(let i=0;i<k;i++){ const p=base[rand(0,base.length-1)]; f.push(p); if(Math.random()<0.5) f.push(p); }
+    const n=makeCompositeFromPattern(f,2,50); if(n) return n;
+  }
+  return 12;
+}
+function yellowComposite(){
+  for(let t=0;t<300;t++){
+    const roll=Math.random();
+    if(roll<0.34){
+      const p=[2,3,5,7,11,13][rand(0,5)], e=rand(3,5);
+      const n=makeCompositeFromPattern(Array(e).fill(p),20,150); if(n) return n;
+    }else if(roll<0.68){
+      const p=[2,3,5][rand(0,2)], e=rand(3,5);
+      const q=[3,5,7,11,13][rand(0,4)];
+      const n=makeCompositeFromPattern([...Array(e).fill(p), q],20,150); if(n) return n;
+    }else{
+      const s=shuffle([2,3,5,7,11,13]).slice(0,3);
+      if(Math.random()<0.4) s.push(s[rand(0,2)]);
+      const n=makeCompositeFromPattern(s,20,150); if(n) return n;
+    }
+  }
+  return 60;
+}
+function redComposite(){
+  for(let t=0;t<400;t++){
+    const roll=Math.random();
+    if(roll<0.33){
+      let base=shuffle([2,3,5,7,11,13,17,19]).slice(0,4);
+      if(!base.includes(11) && !base.includes(13)) base[0]=11;
+      const n=makeCompositeFromPattern(base,100,1000); if(n) return n;
+    }else if(roll<0.66){
+      const p=[2,3,5][rand(0,2)], e=rand(3,5);
+      const extras=shuffle([2,3,5,7,11,13,17]).filter(x=>x!==p).slice(0,rand(1,2));
+      if(!extras.includes(11) && !extras.includes(13) && Math.random()<0.6) extras[0]=(Math.random()<0.5?11:13);
+      const n=makeCompositeFromPattern([...Array(e).fill(p), ...extras],100,1000); if(n) return n;
+    }else{
+      const p=[2,3,5,7][rand(0,3)], q=[2,3,5,7,11,13][rand(0,5)];
+      let e1=rand(2,5), e2=rand(2,4); if(p===q) e2=Math.min(5-e1,3);
+      let f=[...Array(e1).fill(p), ...Array(e2).fill(q)];
+      if(!(p===11||q===11||p===13||q===13) && Math.random()<0.5) f.push(Math.random()<0.5?11:13);
+      const n=makeCompositeFromPattern(f,100,1000); if(n) return n;
+    }
+  }
+  return 324;
+}
+function makeNumberForTier(tier){
+  if(tier==="green") return greenComposite();
+  if(tier==="yellow") return yellowComposite();
+  if(tier==="red") return redComposite();
+  return [greenComposite,yellowComposite,redComposite][rand(0,2)]();
+}
+
+/* =============== State & DOM =============== */
+let state={
+  running:false,
+  timerOn:true,
+  sessionLeft:60, sessionLen:60, sessionId:null,
+  n:null, tier:"green",
+  score:0, answered:0, correct:0,
+  seen:new Set(),
+  awaitingAdvance:false,
+  advanceTimerId:null,
+  missed:[],             // collect mistakes for summary
+  soundOn:false,
+  audioCtx:null
+};
+
+const elTier=document.getElementById('tier');
+const elTierDot=document.getElementById('tierDot');
+const elTierLabel=document.getElementById('tierLabel');
+const elTimerWrap=document.getElementById('timerWrap');
+const elTimer=document.getElementById('timer');
+const elSessionSel=document.getElementById('sessionTimerSel');
+const elSessionLen=document.getElementById('sessionLenSel');
+const elSoundSel=document.getElementById('soundSel');
+const elContrastSel=document.getElementById('contrastSel');
+
+const elStart=document.getElementById('startBtn');
+const elEnd=document.getElementById('endBtn');
+const elHow=document.getElementById('howBtn');
+
+const elPrompt=document.getElementById('prompt');
+const elScore=document.getElementById('score');
+const elCorrect=document.getElementById('correct');
+const elAnswered=document.getElementById('answered');
+
+const elChallengeUI=document.getElementById('challengeUI');
+const elInputs=document.getElementById('factorInputs');
+const elSubmit=document.getElementById('submitBtn');
+const elClear=document.getElementById('clearBtn');
+const elAdd=document.getElementById('addFactorBtn');
+
+const elFeedback=document.getElementById('feedback');
+const elSteps=document.getElementById('steps');
+const elStepsText=document.getElementById('stepsText');
+
+const elSummary=document.getElementById('summary');
+const elSumText=document.getElementById('sumText');
+const elMissList=document.getElementById('missList');
+const elRestart=document.getElementById('restartBtn');
+
+const elModal=document.getElementById('howModal');
+const elModalClose=document.getElementById('closeHow');
+const elResultPop=document.getElementById('resultPop');
+
+let focusedInput=null;
+
+/* =============== UI Helpers =============== */
+function setTierBadge(t){
+  const map={green:["🟢 Easy","dot-green"], yellow:["🟡 Medium","dot-yellow"], red:["🔴 Hard","dot-red"], mixed:["🎲 Mixed","dot-green"]};
+  const [lbl,cls]=map[t]||map.green; elTierLabel.textContent=lbl; elTierDot.className="tier-dot "+cls;
+}
+function showFeedback(ok, html){
+  elFeedback.className="feedback "+(ok?"ok":"bad");
+  elFeedback.innerHTML = (ok?"✔ ":"✖ ")+html;
+}
+function hideFeedback(){ elFeedback.className="feedback"; elFeedback.innerHTML=""; }
+function showSteps(text){ elSteps.style.display="block"; elStepsText.textContent=text; }
+function hideSteps(){ elSteps.style.display="none"; elStepsText.textContent=""; }
+function showUI(){ elChallengeUI.classList.remove('hidden'); elSummary.classList.add('hidden'); }
+function showSummary(){
+  elChallengeUI.classList.add('hidden'); elSummary.classList.remove('hidden');
+  const acc = state.answered? Math.round(100*state.correct/state.answered) : 0;
+  elSumText.innerHTML = `
+    Answered: <strong>${state.answered}</strong> &nbsp;|&nbsp;
+    Correct: <strong style="color:var(--ok)">${state.correct}</strong> &nbsp;|&nbsp;
+    Accuracy: <strong>${acc}%</strong> &nbsp;|&nbsp;
+    Score: <strong>${state.score}</strong>
+  `;
+  // Build missed list
+  elMissList.innerHTML = "";
+  if(state.missed.length){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<p class="muted">Incorrect Answers (${state.missed.length}): click to view steps.</p>`;
+    state.missed.forEach((m,i)=>{
+      const card = document.createElement('div');
+      card.className="miss-card";
+      const det = document.createElement('details');
+      const sum = document.createElement('summary');
+      sum.innerHTML = `<span class="miss-q">Q${i+1}:</span> Factorize ${m.n} — Your answer: <em>${m.user||("(none)")}<\/em>`;
+      const body = document.createElement('div');
+      body.style.marginTop='8px';
+      body.innerHTML = `
+        <div><strong>Correct:</strong> ${m.correctExpanded} <span class="muted">(${m.correctExpo})</span></div>
+        <pre style="margin-top:8px">${m.steps.join("\n")}</pre>
+      `;
+      det.appendChild(sum); det.appendChild(body);
+      card.appendChild(det); wrap.appendChild(card);
+    });
+    elMissList.appendChild(wrap);
+  } else {
+    elMissList.innerHTML = `<p class="muted">No incorrect answers. 🎉</p>`;
+  }
+}
+function showResultPop(ok){
+  elResultPop.textContent = ok ? "✔" : "✖";
+  elResultPop.style.color = ok ? "var(--ok)" : "var(--bad)";
+  elResultPop.classList.add('show');
+  setTimeout(()=>elResultPop.classList.remove('show'), 600);
+}
+
+/* =============== Sound (Web Audio tiny beeps) =============== */
+function ensureAudio(){
+  if(!state.audioCtx) try{ state.audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+}
+function beep(freq=660, dur=0.12, type="sine"){
+  if(!state.soundOn || !state.audioCtx) return;
+  const ctx=state.audioCtx, o=ctx.createOscillator(), g=ctx.createGain();
+  o.type=type; o.frequency.value=freq;
+  g.gain.setValueAtTime(0.0001, ctx.currentTime);
+  g.gain.linearRampToValueAtTime(0.08, ctx.currentTime+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(); o.stop(ctx.currentTime+dur+0.02);
+}
+function soundCorrect(){ beep(880,0.10,"sine"); }
+function soundWrong(){ beep(220,0.14,"sawtooth"); }
+
+/* =============== Inputs handling (with Tab fix) =============== */
+function addFactorInput(val=""){
+  if(elInputs.querySelectorAll('input').length>=1){
+    const times=document.createElement('span');
+    times.className="times";
+    times.textContent="×";
+    elInputs.appendChild(times);
+  }
+  const inp=document.createElement('input');
+  inp.type="number"; inp.inputMode="numeric"; inp.placeholder="prime"; inp.value=val;
+  inp.setAttribute("aria-label","Prime factor");
+  inp.dataset.exp="1";
+  inp.addEventListener('focus',()=>{ focusedInput=inp; });
+
+  inp.addEventListener('keydown',e=>{
+    if(e.key==="Enter"){ e.preventDefault(); submit(); return; }
+    if(e.key==="Tab" && !e.shiftKey){
+      e.preventDefault();
+      const inputs=[...elInputs.querySelectorAll('input')];
+      const idx=inputs.indexOf(inp);
+      if(idx>=0 && idx<inputs.length-1){
+        inputs[idx+1].focus();
+      }else{
+        if((inp.value||"").trim()!==''){
+          const newly=addFactorInput("");
+          newly.focus();
+        }else{
+          inp.focus();
+        }
+      }
+    }
+  });
+
+  elInputs.appendChild(inp);
+  inp.focus();
+  return inp;
+}
+function clearInputs(){
+  elInputs.innerHTML="";
+  addFactorInput("");
+  focusedInput = elInputs.querySelector('input');
+}
+
+/* =============== Exponent tools =============== */
+function updateExpBadge(inp){
+  const next = inp.nextSibling;
+  if(next && next.classList && next.classList.contains('expBadge')) next.remove();
+  const e = Number(inp.dataset.exp||"1");
+  if(e>1){
+    const b=document.createElement('span');
+    b.className='expBadge';
+    b.style.marginLeft='4px';
+    b.style.opacity='0.85';
+    b.textContent = ({2:"²",3:"³",4:"⁴",5:"⁵"})[e] || ("^"+e);
+    elInputs.insertBefore(b, inp.nextSibling);
+  }
+}
+
+document.querySelectorAll('.expbar .tiny[data-exp]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    if(!focusedInput) return;
+    const e = Number(btn.dataset.exp);
+    focusedInput.dataset.exp = String(e);
+    updateExpBadge(focusedInput);
+    focusedInput.focus();
+  });
+});
+document.getElementById('expClear').addEventListener('click', ()=>{
+  if(!focusedInput) return;
+  focusedInput.dataset.exp = "1";
+  updateExpBadge(focusedInput);
+  focusedInput.focus();
+});
+
+/* =============== Session Timer (global) =============== */
+function startSessionTimer(){
+  clearInterval(state.sessionId);
+  if(!state.timerOn){ elTimerWrap.style.display="none"; return; }
+  elTimerWrap.style.display="inline-flex";
+  state.sessionLeft = state.sessionLen;
+  elTimer.textContent = state.sessionLeft;
+  state.sessionId = setInterval(()=>{
+    state.sessionLeft--;
+    elTimer.textContent = state.sessionLeft;
+    if(state.sessionLeft<=0){
+      clearInterval(state.sessionId);
+      endSession();
+    }
+  },1000);
+}
+
+/* =============== Question Flow =============== */
+function uniqueComposite(tier){
+  for(let i=0;i<200;i++){
+    const n = makeNumberForTier(tier);
+    if(!state.seen.has(tier+":"+n)){ state.seen.add(tier+":"+n); return n; }
+  }
+  return makeNumberForTier(tier);
+}
+function nextQuestion(){
+  clearTimeout(state.advanceTimerId);
+  state.awaitingAdvance=false;
+  hideFeedback(); hideSteps(); showUI();
+  const t=elTier.value; state.tier=t; setTierBadge(t);
+  state.n = uniqueComposite(t);
+  elPrompt.textContent = `What is the prime factorization of ${state.n}?`;
+  clearInputs();
+}
+
+/* =============== Advance Control (Timer ON: auto; OFF: wait) =============== */
+function scheduleAdvance(){
+  state.awaitingAdvance = true;
+  clearTimeout(state.advanceTimerId);
+  if(state.timerOn){
+    state.advanceTimerId = setTimeout(()=>{ if(state.running) nextQuestion(); }, 1200);
+  } // timer OFF: no auto-advance; wait for Enter
+}
+function advanceNow(){
+  clearTimeout(state.advanceTimerId);
+  state.awaitingAdvance=false;
+  if(state.running) nextQuestion();
+}
+
+/* =============== Submission =============== */
+function gatherFactors(){
+  const out=[];
+  const nodes=[...elInputs.childNodes];
+  nodes.forEach(n=>{
+    if(n.tagName==='INPUT'){
+      const val = n.value.trim();
+      if(val!==''){
+        const base = Number(val);
+        const exp = Math.max(1, Number(n.dataset.exp||"1"));
+        for(let k=0;k<exp;k++) out.push(base);
+      }
+    }
+  });
+  return out;
+}
+
+function submit(){
+  if(!state.running || state.n==null) return;
+  const vals = gatherFactors();
+  if(vals.length===0){ showFeedback(false,"Please enter at least one prime factor."); showResultPop(false); soundWrong(); if(!state.timerOn){ state.awaitingAdvance=true; } return; }
+  for(const v of vals){ if(!Number.isInteger(v)||v<2||!isPrime(v)){ showFeedback(false,`${v} is not prime.`); showResultPop(false); soundWrong(); if(!state.timerOn){ state.awaitingAdvance=true; } return; } }
+
+  state.answered++; elAnswered.textContent = state.answered;
+
+  const prod=product(vals);
+  if(prod!==state.n){
+    const canon=factorize(state.n);
+    const userExpanded = toExpanded(vals);
+    const correctExpanded = toExpanded(canon);
+    const correctExpo = toExpo(canon);
+    showFeedback(false, `Incorrect. Correct answer:<br><strong>${correctExpanded}</strong> <span class="muted">(${correctExpo})</span>`);
+    showResultPop(false);
+    soundWrong();
+    if(state.timerOn){
+      // log mistake only; no steps during sprint
+      state.missed.push({n:state.n, user:userExpanded, correctExpanded, correctExpo, steps:stepsFor(state.n)});
+    }else{
+      // show steps right away in practice
+      showSteps(stepsFor(state.n).join("\n"));
+      // also log for summary
+      state.missed.push({n:state.n, user:userExpanded, correctExpanded, correctExpo, steps:stepsFor(state.n)});
+    }
+    scheduleAdvance();
+  }else{
+    state.correct++; state.score += 10;
+    elScore.textContent = state.score; elCorrect.textContent = state.correct;
+    const canon=factorize(state.n);
+    showFeedback(true, `Correct! ${state.n} = <strong>${toExpanded(canon)}</strong> <span class="muted">(${toExpo(canon)})</span>`);
+    showResultPop(true);
+    soundCorrect();
+    // In practice, don't show steps (not needed); in sprint, no steps either.
+    hideSteps();
+    scheduleAdvance();
+  }
+}
+
+/* =============== Session Control =============== */
+function startSession(){
+  state.running=true;
+  state.timerOn = (elSessionSel.value==="on");
+  state.sessionLen = Number(elSessionLen.value);
+  state.seen.clear();
+  state.score=0; state.answered=0; state.correct=0; state.missed=[];
+  elScore.textContent=state.score; elAnswered.textContent=state.answered; elCorrect.textContent=state.correct;
+
+  document.getElementById('startBtn').disabled=true;
+  document.getElementById('endBtn').disabled=false;
+
+  startSessionTimer();
+  nextQuestion();
+}
+function endSession(){
+  if(!state.running) return;
+  state.running=false;
+  clearInterval(state.sessionId);
+  clearTimeout(state.advanceTimerId);
+  showSummary();
+  document.getElementById('startBtn').disabled=false;
+  document.getElementById('endBtn').disabled=true;
+}
+
+/* =============== Events =============== */
+document.getElementById('submitBtn').addEventListener('click', submit);
+document.getElementById('clearBtn').addEventListener('click', clearInputs);
+document.getElementById('addFactorBtn').addEventListener('click', ()=>{ const i=addFactorInput(""); i.focus(); });
+
+document.getElementById('startBtn').addEventListener('click', startSession);
+document.getElementById('endBtn').addEventListener('click', endSession);
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  elSummary.classList.add('hidden');
+  startSession();
+});
+
+document.addEventListener('keydown',e=>{
+  if(e.key==="Enter"){
+    if(state.awaitingAdvance){ e.preventDefault(); advanceNow(); return; }
+    e.preventDefault(); submit();
+  }
+});
+
+elTier.addEventListener('change',()=>setTierBadge(elTier.value));
+
+elSessionSel.addEventListener('change',e=>{
+  const on = (e.target.value==="on");
+  elSessionLen.disabled = !on;
+  elTimerWrap.style.display = on ? "inline-flex" : "none";
+});
+
+elSoundSel.addEventListener('change',e=>{
+  state.soundOn = (e.target.value==="on");
+  if(state.soundOn) ensureAudio();
+});
+
+elContrastSel.addEventListener('change',e=>{
+  if(e.target.value==="high"){
+    document.documentElement.style.setProperty('--bg','#000');
+    document.documentElement.style.setProperty('--card','#000');
+    document.documentElement.style.setProperty('--text','#fff');
+    document.documentElement.style.setProperty('--muted','#ddd');
+  }else{
+    location.reload(); // keep exact behavior you requested
+  }
+});
+
+// How to Play modal
+function openHow(){ document.getElementById('howModal').style.display='flex'; }
+function closeHow(){ document.getElementById('howModal').style.display='none'; }
+document.getElementById('howBtn').addEventListener('click', openHow);
+document.getElementById('closeHow').addEventListener('click', closeHow);
+window.addEventListener('load', openHow);
+
+/* =============== Scratchpad (canvas) =============== */
+const pad=document.getElementById('pad');
+const ctx=pad.getContext('2d');
+let drawing=false, erasing=false, last=null, color=document.getElementById('colorSel').value, size=Number(document.getElementById('sizeSel').value);
+ctx.lineCap='round'; ctx.lineJoin='round';
+
+function xy(ev){
+  const rect=pad.getBoundingClientRect();
+  const x = (ev.touches? ev.touches[0].clientX : ev.clientX) - rect.left;
+  const y = (ev.touches? ev.touches[0].clientY : ev.clientY) - rect.top;
+  return {x: x * (pad.width/rect.width), y: y * (pad.height/rect.height)};
+}
+function startDraw(ev){ drawing=true; last=xy(ev); ev.preventDefault(); }
+function moveDraw(ev){
+  if(!drawing) return;
+  const p=xy(ev);
+  ctx.strokeStyle = erasing ? '#0b1328' : color;
+  ctx.lineWidth = size;
+  ctx.beginPath();
+  ctx.moveTo(last.x,last.y);
+  ctx.lineTo(p.x,p.y);
+  ctx.stroke();
+  last=p; ev.preventDefault();
+}
+function endDraw(){ drawing=false; }
+
+pad.addEventListener('mousedown',startDraw); pad.addEventListener('mousemove',moveDraw); window.addEventListener('mouseup',endDraw);
+pad.addEventListener('touchstart',startDraw,{passive:false}); pad.addEventListener('touchmove',moveDraw,{passive:false}); window.addEventListener('touchend',endDraw);
+
+document.getElementById('penBtn').addEventListener('click',()=>{erasing=false;});
+document.getElementById('eraserBtn').addEventListener('click',()=>{erasing=true;});
+document.getElementById('sizeSel').addEventListener('input',e=>{size=Number(e.target.value);});
+document.getElementById('colorSel').addEventListener('input',e=>{color=e.target.value;});
+document.getElementById('padClear').addEventListener('click',()=>{ctx.clearRect(0,0,pad.width, pad.height);});
+document.getElementById('padDownload').addEventListener('click',()=>{
+  const a=document.createElement('a'); a.href=pad.toDataURL('image/png'); a.download='scratchpad.png'; a.click();
+});
+
+/* =============== Init =============== */
+function setTierBadgeInit(t){ const map={green:["🟢 Easy","dot-green"], yellow:["🟡 Medium","dot-yellow"], red:["🔴 Hard","dot-red"], mixed:["🎲 Mixed","dot-green"]}; const [lbl,cls]=map[t]||map.green; elTierLabel.textContent=lbl; elTierDot.className="tier-dot "+cls;}
+setTierBadgeInit('green');
+elTimer.textContent = 60;
+elSessionLen.disabled = (elSessionSel.value!=="on");
+</script>
+</body>
+</html>
